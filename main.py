@@ -14,12 +14,10 @@ try:
     model = joblib.load("lantaarnpaal_model.pkl")
     print("Succes: Het ML-model is geladen!")
 except Exception as e:
-    print(
-        f"Fout bij het laden van het model: {e}. Staat 'lantaarnpaal_model.pkl' wel in deze map?"
-    )
+    print(f"Fout bij het laden van het model: {e}. Staat 'lantaarnpaal_model.pkl' wel in deze map?")
 
 
-# 3. Het Pydantic input-schema (exact 10 features, passend bij Stap 1)
+# 3. Het Pydantic input-schema (exact 10 features)
 class PredictionInput(BaseModel):
     latitude: float
     longitude: float
@@ -30,15 +28,22 @@ class PredictionInput(BaseModel):
     neerslag_mm: float
     gladheid_risico: int  # 0 = Nee, 1 = Ja
     lage_zon_risico: int  # 0 = Nee, 1 = Ja
-    inwoners_gemeente: int = (
-        223000  # Standaardwaarde voor Almere, mocht OutSystems dit vergeten
-    )
+    inwoners_gemeente: int = 223000  # Standaardwaarde voor Almere
 
 
-# 4. Het POST-eindpunt
+# 4. Het GET root-eindpunt
+@app.get("/")
+def root():
+    return {
+        "status": "De API is online!",
+        "Ga naar": "/docs voor de interactieve documentatie.",
+    }
+
+
+# 5. Het POST voorspel-eindpunt
 @app.post("/predict")
 def predict_crash_chance(data: PredictionInput):
-    # LET OP: De volgorde hieronder moet EXACT gelijk zijn aan de 'features_model' lijst uit Google Colab!
+    # De volgorde hieronder moet EXACT gelijk zijn aan de 'features_model' lijst uit Google Colab!
     features = [[
         data.latitude,
         data.longitude,
@@ -59,9 +64,7 @@ def predict_crash_chance(data: PredictionInput):
     return {"kans_op_aanrijding": round(float(kans_op_aanrijding), 4)}
 
 
-@app.get("/")
-def root():
-    return {
-        "status": "De API is online!",
-        "Ga naar": "/docs voor de interactieve documentatie.",
-    }
+# 6. Automatische opstart-instructie voor Azure Linux containers
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
