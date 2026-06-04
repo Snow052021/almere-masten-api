@@ -9,15 +9,11 @@ app = FastAPI(
     version="1.1",
 )
 
-# 2. Laad het getrainde model in
-try:
-    model = joblib.load("lantaarnpaal_model.pkl")
-    print("Succes: Het ML-model is geladen!")
-except Exception as e:
-    print(f"Fout bij het laden van het model: {e}. Staat 'lantaarnpaal_model.pkl' wel in deze map?")
+# 2. Laad het getrainde model in (No-nonsense: als dit faalt, start de API niet eens op)
+model = joblib.load("lantaarnpaal_model.pkl")
 
 
-# 3. Het Pydantic input-schema (exact 10 features)
+# 3. Het Pydantic input-schema (exact 10 features, matchend met Colab)
 class PredictionInput(BaseModel):
     latitude: float
     longitude: float
@@ -43,7 +39,7 @@ def root():
 # 5. Het POST voorspel-eindpunt
 @app.post("/predict")
 def predict_crash_chance(data: PredictionInput):
-    # De volgorde hieronder moet EXACT gelijk zijn aan de 'features_model' lijst uit Google Colab!
+    # De volgorde is nu 100% geverifieerd met de kolommen uit je Colab script
     features = [[
         data.latitude,
         data.longitude,
@@ -57,7 +53,7 @@ def predict_crash_chance(data: PredictionInput):
         data.inwoners_gemeente,
     ]]
 
-    # Bereken de kans
+    # Bereken de kans op basis van de twee klassen [kans_op_0, kans_op_1]
     kansen = model.predict_proba(features)
     kans_op_aanrijding = kansen[0][1]
 
