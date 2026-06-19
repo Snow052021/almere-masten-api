@@ -1,31 +1,28 @@
 import joblib
 import pandas as pd
+import numpy as np
 from fastapi import FastAPI
 from pydantic import BaseModel
 
 # 1. Initialiseer de FastAPI applicatie
 app = FastAPI(
     title="Almere Lantaarnpaal Predictor API",
-    description="API voor het voorspellen van aanrijdingen op schademasten.",
-    version="1.2",
+    description="API voor het voorspellen van aanrijdingen op schademasten (Versie 2 - Echte Data).",
+    version="2.0",
 )
 
 # 2. Laad het getrainde model in
 model = joblib.load("lantaarnpaal_model.pkl")
 
 
-# 3. Het Pydantic input-schema
+# 3. Het Pydantic input-schema (Aangepast aan de nieuwe werkelijkheid!)
+# Jouw Low-Code app hoeft nu veel minder data mee te sturen naar Azure.
 class PredictionInput(BaseModel):
     latitude: float
     longitude: float
     mast_hoogte: float
-    wegtype: int  
-    dagdeel: int  
     temperatuur: float
     neerslag_mm: float
-    gladheid_risico: int  
-    lage_zon_risico: int  
-    inwoners_gemeente: int = 223000  
 
 
 # 4. Het GET root-eindpunt
@@ -33,6 +30,7 @@ class PredictionInput(BaseModel):
 def root():
     return {
         "status": "De API is online!",
+        "Versie": "2.0 (Getraind op echte data via objectnummers)",
         "Ga naar": "/docs voor de interactieve documentatie.",
     }
 
@@ -40,21 +38,21 @@ def root():
 # 5. Het POST voorspel-eindpunt
 @app.post("/predict")
 def predict_crash_chance(data: PredictionInput):
-    # We maken er een dictionary van met de EXACTE kolomnamen uit Google Colab
+    
+    # Automatisch het gladheid_risico berekenen net zoals in de trainingsdata
+    gladheid_risico = 1 if (data.temperatuur < 2 and data.neerslag_mm > 0) else 0
+
+    # We maken een dictionary met de EXACTE 6 kolommen in de EXACTE volgorde van de training:
     input_dict = {
         "latitude": [data.latitude],
         "longitude": [data.longitude],
         "mast_hoogte": [data.mast_hoogte],
-        "wegtype": [data.wegtype],
-        "dagdeel": [data.dagdeel],
         "temperatuur": [data.temperatuur],
         "neerslag_mm": [data.neerslag_mm],
-        "gladheid_risico": [data.gladheid_risico],
-        "lage_zon_risico": [data.lage_zon_risico],
-        "inwoners_gemeente": [data.inwoners_gemeente]
+        "gladheid_risico": [gladheid_risico] # Deze berekent de API nu dus zelf!
     }
 
-    # Omzetten naar een Pandas DataFrame zodat Scikit-Learn de kolomnamen herkent
+    # Omzetten naar een Pandas DataFrame
     df_features = pd.DataFrame(input_dict)
 
     # Bereken de kans
