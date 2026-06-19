@@ -56,7 +56,7 @@ def predict_crash_chance(data: PredictionInput):
     df_features = pd.DataFrame(input_dict)
 
     # Bereken de kans
-    kansen = model.predict_proba(df_features)
+    kansen = model.predict_proba(df_features.values)
     kans_op_aanrijding = kansen[0][1]
 
     return {"kans_op_aanrijding": round(float(kans_op_aanrijding), 4)}
