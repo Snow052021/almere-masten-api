@@ -12,7 +12,7 @@ app = FastAPI(
 )
 
 # 2. Laad het getrainde model in
-model = joblib.load("lantaarnpaal_model.pkl")
+model = joblib.load("lantaarnpaal_model_definitief.pkl")
 
 
 # 3. Het Pydantic input-schema (Aangepast aan de nieuwe werkelijkheid!)
